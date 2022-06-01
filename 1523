@@ -1,0 +1,52 @@
+pipeline{
+    
+    agent any
+    
+    tools{
+        maven 'maven3'
+    }
+    
+    stages{
+        
+        stage('checkout') {
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'Github_credinatials', url: 'https://github.com/alphasyed/JavaProject1.git']]])
+            }
+            
+        }
+        stage("build") {
+            steps {
+                sh 'mvn clean install -f webapp/pom.xml'
+            }
+        }
+        stage("deploy") {
+            steps {
+                sh 'cp /root/.jenkins/workspace/project_3/webapp/target/*.war /opt/Tomcat/webapps/'
+            }
+        }
+        stage ('upload') {
+            steps{
+
+rtUpload (
+    serverId: 'artifact',
+    spec: '''{
+          "files": [
+            {
+              "pattern": "**/target/*.war",
+              "target": "test2/"
+            }
+         ]
+    }''',
+ 
+    // Optional - Associate the uploaded files with the following custom build name and build number,
+    // as build artifacts.
+    // If not set, the files will be associated with the default build name and build number (i.e the
+    // the Jenkins job name and number).
+    buildName: 'test_war_jFrog',
+    buildNumber: '42',
+)
+
+    }
+        }
+    }
+}
